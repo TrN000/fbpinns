@@ -1,0 +1,16 @@
+[build-system]
+requires = ["poetry>=1.1.0"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "fbpinns"
+version = "0.1.0"
+description = "finite basis physics informed neural networks"
+authors = ["Nicolas Trutmann <nicolatr@student.ethz.ch>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = "2.0.1"
+matplotlib = "3.7.1"
+numpy = "1.25.0"
+
