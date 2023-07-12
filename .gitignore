@@ -1,3 +1,5 @@
 report.pdf
 __pycache__
 dist
+.venv
+src/fbpinns.egg-info
