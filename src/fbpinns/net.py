@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 import torch.nn as nn
 
 
@@ -16,7 +17,7 @@ class NeuralNet(nn.Module):
         if self.layers != 0:
             self.input_layer = nn.Linear(self.input_dim, self.neurons)
             self.hidden_layers = nn.ModuleList(
-                [nn.Linear(self.neurons, self.neurons) for _ in range(layers - 1)]
+                [nn.Linear(self.neurons, self.neurons) for _ in range(self.layers - 1)]
             )
             self.output_layer = nn.Linear(self.neurons, self.output_dim)
 
@@ -34,7 +35,7 @@ class NeuralNet(nn.Module):
 
         self.apply(init_weights)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         if self.layers != 0:
             x = self.activation(self.input_layer(x))
             for l in self.hidden_layers:
