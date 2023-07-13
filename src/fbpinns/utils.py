@@ -1,6 +1,7 @@
 from typing import Callable, Tuple
 
 from torch import Tensor, sigmoid
+import torch.nn as nn
 
 
 def rescale(t: Tensor, lower: Tensor | float, upper: Tensor | float):
@@ -12,11 +13,13 @@ def rescale(t: Tensor, lower: Tensor | float, upper: Tensor | float):
     return (t * diff) + lower
 
 
-def window_function(
+def window(
     lower: Tensor | float, upper: Tensor | float, sigma: float
 ) -> Callable[..., Tensor]:
+    """sigma: bigger means tighter cutoff"""
+
     def inner(x: Tensor):
-        return sigmoid((x - lower) / sigma) * sigmoid((upper - x) / sigma)
+        return sigmoid((x - lower) * sigma) * sigmoid((upper - x) * sigma)
 
     return inner
 
@@ -32,3 +35,17 @@ def partition(
     # offset of the ends of the window from the midpoint
     over = (d_mid + overlap) / 2
     return [(mid - over, mid + over) for mid in mids]
+
+
+class Window(nn.Module):
+    """
+    window function as a nn module. this is so that it can be used
+    in places like `Sequential`.
+    """
+
+    def __init__(self, lower, upper, sigma):
+        super(Window, self).__init__()
+        self.window = window(lower, upper, sigma)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.window(x)
