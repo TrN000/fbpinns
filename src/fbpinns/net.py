@@ -6,7 +6,6 @@ They apply every module in their module lists and sum/prod their results
 element-wise.
 """
 
-from typing import Iterable
 
 import torch
 from torch import Tensor
