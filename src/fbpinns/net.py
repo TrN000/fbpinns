@@ -1,3 +1,13 @@
+"""
+module for neural network architectures.
+Provides a fully connected network as well as
+Multiplicative and Additive class, which subclas nn.ModuleList.
+They apply every module in their module lists and sum/prod their results
+element-wise.
+"""
+
+from typing import Iterable
+
 import torch
 from torch import Tensor
 import torch.nn as nn
@@ -43,3 +53,26 @@ class NeuralNet(nn.Module):
             return self.output_layer(x)
         else:
             return self.linear_regression_layer(x)
+
+
+class Additive(nn.ModuleList):
+    def __init__(self, *args):
+        super(Additive, self).__init__(*args)
+        # make assertions about input and output dimensions
+
+    def forward(self, x: Tensor) -> Tensor:
+        acc = torch.zeros_like(x)
+        for module in self:
+            acc += module(x)
+        return acc
+
+
+class Multiplicative(nn.ModuleList):
+    def __init__(self, *args):
+        super(Multiplicative, self).__init__(*args)
+
+    def forward(self, x: Tensor) -> Tensor:
+        acc = torch.ones_like(x)
+        for module in self:
+            acc *= module(x)
+        return acc
