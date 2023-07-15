@@ -113,6 +113,7 @@ class HighFreqSimple:
         # axs[1].xscale("log")
         axs[1].set_xlabel("iterations")
         axs[1].set_ylabel("log-loss")
+        axs[1].set_yscale("log")
         axs[1].grid(True, which="both", ls=":")
 
         axs[0].set_title("Measurements")
@@ -255,40 +256,41 @@ def main():
     parser.add_argument("-s", "--simple", action="store_true")
     parser.add_argument("-f", "--fbpinn", action="store_true")
     parser.add_argument("-b", "--both", action="store_true")
+    parser.add_argument("-d", "--debug", action="count", default=0)
     args = parser.parse_args()
+    it = 10 ** (1 + args.debug)
+    x = torch.linspace(EXTREMA[0], EXTREMA[1], 10000).reshape([-1, 1])
 
     if args.simple:
         simple_problem = HighFreqSimple(5, 128)
-        loss_history_simple = simple_problem.fit(1000)
-        # loss_history_simple = problem.fit_simple(1, optim_lbfgs)
+        loss_history_simple = simple_problem.fit(it)
         simple_problem.plot(loss_history_simple)
 
     if args.fbpinn:
         fb_problem = HighFreqFb(2, 16)
-        fb_history = fb_problem.fit(1000)
+        fb_history = fb_problem.fit(it)
         fb_problem.plot(fb_history)
 
     if args.both:
         simple_problem = HighFreqSimple(5, 128)
         fb_problem = HighFreqFb(2, 16)
-        s_hist = simple_problem.fit(1000)
-        fb_hist = fb_problem.fit(1000)
+        s_hist = simple_problem.fit(it)
+        fb_hist = fb_problem.fit(it)
 
         cols = matplotlib.colors.TABLEAU_COLORS
         keys = list(cols)
 
-        inputs, _ = rescale(SOBOL.draw(1000), -6, 6).sort(dim=0)
-        output_s = simple_problem.model.forward(inputs).detach().numpy()
-        output_f = fb_problem.model.forward(inputs).detach().numpy()
-        actual = simple_problem.exact_solution(inputs).detach().numpy()
+        output_s = simple_problem.model.forward(x).detach().numpy()
+        output_f = fb_problem.model.forward(x).detach().numpy()
+        actual = simple_problem.exact_solution(x).detach().numpy()
 
         _, axs = plt.subplots(2, 2, figsize=(16, 10), dpi=150)
 
         axs[0, 0].plot(
-            inputs.detach().numpy(), output_s, color=cols[keys[0]], label="pinn"
+            x.detach().numpy(), output_s, color=cols[keys[0]], label="pinn"
         )
         axs[0, 0].plot(
-            inputs.detach().numpy(), actual, color=cols[keys[2]], label="actual"
+            x.detach().numpy(), actual, color=cols[keys[2]], label="actual"
         )
         axs[0, 0].set_xlabel("x")
         axs[0, 0].set_ylabel("f(x)")
@@ -297,10 +299,10 @@ def main():
         axs[0, 0].set_title("Output")
 
         axs[1, 0].plot(
-            inputs.detach().numpy(), output_f, color=cols[keys[1]], label="fbpinn"
+            x.detach().numpy(), output_f, color=cols[keys[1]], label="fbpinn"
         )
         axs[1, 0].plot(
-            inputs.detach().numpy(), actual, color=cols[keys[2]], label="actual"
+            x.detach().numpy(), actual, color=cols[keys[2]], label="actual"
         )
         axs[1, 0].set_xlabel("x")
         axs[1, 0].set_ylabel("f(x)")
