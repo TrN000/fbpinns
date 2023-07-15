@@ -32,7 +32,7 @@ In recent years, physics-informed neural networks (PINNs) have lead to powerful 
 for solving differential equations. Despite their many advantages, they struggle in
 several aspects. They struggle to approximate large-scale problems, where a single network
 has to solve a PDE over a large domain. On multi-scale problems they also fail to capture
-the entire solution, either approximating it only spotwise or poorly overall.
+the entire solution, either approximating it only spot wise or poorly overall.
 
 Finite basis PINNs promise to solve these problems. The name is borrowed from finite
 element method from classical numerical methods, where the solution of the differential
@@ -59,13 +59,13 @@ Adam with learning rate of 1e-3, but only 10000 learning steps due to machine an
 limitations.
 
 As a window function I attempted to implement the window function given in the paper
-(equation 14), however, key parameters were ommited. I guessed them as best as possible.
+(equation 14), however, key parameters were omitted. I guessed them as best as possible.
 
 As my own extension I first attempted to combine the results into a larger model with the
-help of the `Additive` module that I wrote(see below). which combines the fully connected
+help of the `Additive` module that I wrote(see below). Which combines the fully connected
 model with the partitioned one and trains both at the same time.
 
-Further investigating this result I developed a logarithmic approach by parttioning the
+Further investigating this result I developed a logarithmic approach by partitioning the
 domain in logarithmic increments and adding these up.
 In my experiment I added 4 layers, fully connected, partitioned into 2, 4 and 8
 subdomains, all with 2 hidden layers and 16 neurons.
@@ -84,7 +84,7 @@ In total these networks have the following free parameters:
 An implementation detail of note is the following: I developed a simple but effective way
 to combine models into larger meta-models.  Suppose you had identically dimensioned
 models, you could want to sum them together or multiply them in a generic way. I wrote two
-model types based on the `torch.nn.ModuleList` module wich have basic sums and products as
+model types based on the `torch.nn.ModuleList` module which have basic sums and products as
 their forward method.  Here is the `fbpinns.net.Additive` model:
 
 ```python
