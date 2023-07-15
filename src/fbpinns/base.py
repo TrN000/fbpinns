@@ -1,5 +1,7 @@
+import argparse
 from typing import Callable
 
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -51,9 +53,7 @@ class HighFreqSimple:
         )
 
         # instantiate NN
-        self.model: ModelType = NeuralNet(
-            1, 1, layers=self.layers, neurons=self.hidden
-        )
+        self.model: ModelType = NeuralNet(1, 1, layers=self.layers, neurons=self.hidden)
 
     def exact_solution(self, x: Tensor) -> Tensor:
         return sin(self.o_1 * x) + sin(self.o_2 * x)
@@ -61,9 +61,11 @@ class HighFreqSimple:
     def pde(self, x: Tensor) -> Tensor:
         return self.o_1 * cos(self.o_1 * x) + self.o_2 * cos(self.o_2 * x)
 
-    def fit(
-        self, epochs: int, optimizer: LBFGS | Adam, verbose: bool = True
-    ) -> list[float]:
+    def fit(self, epochs: int, verbose: bool = True) -> list[float]:
+        optimizer = Adam(
+            self.model.parameters(),
+            lr=float(1e-3),
+        )
         history: list[float] = []
         for epoch in range(epochs):
             if verbose:
@@ -147,7 +149,7 @@ class HighFreqFb:
         )
 
         # partition input space/instantiate NN
-        self.fbpinn = Additive(
+        self.model = Additive(
             [
                 Multiplicative(
                     [
@@ -157,7 +159,6 @@ class HighFreqFb:
                 )
                 for lower, upper in sorted(
                     partition(self.extrema[0], self.extrema[1], 30, 0.3),
-                    # partition(-1, 1, 3, 0.3),
                     key=lambda x: min(abs(x[0]), abs(x[1])),
                 )
             ]
@@ -172,7 +173,7 @@ class HighFreqFb:
     def fit(self, epochs: int, verbose: bool = True) -> list[float]:
         history: list[float] = []
         optimizer = Adam(
-            self.fbpinn.parameters(),
+            self.model.parameters(),
             lr=float(1e-3),
         )
         for epoch in range(epochs):
@@ -186,13 +187,10 @@ class HighFreqFb:
 
                     # calculate loss
                     inp.requires_grad = True
-                    u = self.fbpinn.forward(inp)
+                    u = self.model.forward(inp)
                     du = torch.autograd.grad(u.sum(), inp, create_graph=True)[0]
-                    if epoch % 249 == 0:
-                        plt.scatter(inp.detach().numpy(), u.detach().numpy())
-                        plt.show()
-                    pde_loss = mean(abs(du - out) ** 2)
-                    bound = self.fbpinn.forward(Tensor([0.0]))
+                    pde_loss = mean((du - out) ** 2)
+                    bound = self.model.forward(Tensor([0.0]))
                     if verbose:
                         print(
                             "pde :\t",
@@ -213,7 +211,7 @@ class HighFreqFb:
         # TODO: add option to write to image
         # TODO: make history implicit
         inputs, _ = rescale(SOBOL.draw(1000), -6, 6).sort(dim=0)
-        outputs = self.fbpinn.forward(inputs).detach().numpy()
+        outputs = self.model.forward(inputs).detach().numpy()
         actual = self.exact_solution(inputs).detach().numpy()
 
         _, axs = plt.subplots(2, 1, figsize=(16, 10), dpi=150)
@@ -227,6 +225,7 @@ class HighFreqFb:
         # axs[1].xscale("log")
         axs[1].set_xlabel("iterations")
         axs[1].set_ylabel("log-loss")
+        axs[1].set_xscale("log")
         axs[1].grid(True, which="both", ls=":")
 
         axs[0].set_title("Measurements")
@@ -236,21 +235,73 @@ class HighFreqFb:
 
 
 def main():
-    # TODO: use argparse to allow execution paths
+    parser = argparse.ArgumentParser(
+        "Base Task",
+    )
+    parser.add_argument("-s", "--simple", action="store_true")
+    parser.add_argument("-f", "--fbpinn", action="store_true")
+    parser.add_argument("-b", "--both", action="store_true")
+    args = parser.parse_args()
 
-    if True:
+    if args.simple:
         simple_problem = HighFreqSimple(5, 128)
-        loss_history_simple = simple_problem.fit(
-            1000,
-            optimizer=Adam(
-                simple_problem.model.parameters(),
-                lr=float(1e-3),
-            ),
-        )
+        loss_history_simple = simple_problem.fit(1000)
         # loss_history_simple = problem.fit_simple(1, optim_lbfgs)
         simple_problem.plot(loss_history_simple)
 
-    if True:
+    if args.fbpinn:
         fb_problem = HighFreqFb(2, 16)
-        fb_history = fb_problem.fit(500)
+        fb_history = fb_problem.fit(1000)
         fb_problem.plot(fb_history)
+
+    if args.both:
+        simple_problem = HighFreqSimple(5, 128)
+        fb_problem = HighFreqFb(2, 16)
+        s_hist = simple_problem.fit(1000)
+        fb_hist = fb_problem.fit(1000)
+
+        cols = matplotlib.colors.TABLEAU_COLORS
+        keys = list(cols)
+
+        inputs, _ = rescale(SOBOL.draw(1000), -6, 6).sort(dim=0)
+        output_s = simple_problem.model.forward(inputs).detach().numpy()
+        output_f = fb_problem.model.forward(inputs).detach().numpy()
+        actual = simple_problem.exact_solution(inputs).detach().numpy()
+
+        _, axs = plt.subplots(2, 2, figsize=(16, 10), dpi=150)
+
+        axs[0, 0].plot(
+            inputs.detach().numpy(), output_s, color=cols[keys[0]], label="pinn"
+        )
+        axs[0, 0].plot(
+            inputs.detach().numpy(), actual, color=cols[keys[2]], label="actual"
+        )
+        axs[0, 0].set_xlabel("x")
+        axs[0, 0].set_ylabel("f(x)")
+        axs[0, 0].grid(True, which="both", ls=":")
+        axs[0, 0].legend()
+        axs[0, 0].set_title("Output")
+
+        axs[1, 0].plot(
+            inputs.detach().numpy(), output_f, color=cols[keys[1]], label="fbpinn"
+        )
+        axs[1, 0].plot(
+            inputs.detach().numpy(), actual, color=cols[keys[2]], label="actual"
+        )
+        axs[1, 0].set_xlabel("x")
+        axs[1, 0].set_ylabel("f(x)")
+        axs[1, 0].grid(True, which="both", ls=":")
+        axs[1, 0].legend()
+        axs[1, 0].set_title("Output")
+
+        axs[0, 1].plot(np.arange(1, len(s_hist) + 1), s_hist, label="pinn")
+        axs[0, 1].plot(np.arange(1, len(fb_hist) + 1), fb_hist, label="fbpinn")
+        axs[0, 1].set_xlabel("iterations")
+        axs[0, 1].set_ylabel("log-loss")
+        axs[0, 1].set_xscale("log")
+        axs[0, 1].grid(True, which="both", ls=":")
+        axs[0, 1].legend()
+        axs[0, 1].set_title("Log-Loss")
+
+        plt.subplots_adjust(hspace=0.5)
+        plt.show()
