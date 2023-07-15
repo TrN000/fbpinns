@@ -1,5 +1,5 @@
 
-report.pdf:
+report.pdf: report.md
 	pandoc \
 	-V geometry:margin=1in \
 	-f markdown+yaml_metadata_block \
