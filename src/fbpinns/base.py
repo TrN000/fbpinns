@@ -312,10 +312,17 @@ def main():
         axs[0, 1].plot(np.arange(1, len(fb_hist) + 1), fb_hist, label="fbpinn")
         axs[0, 1].set_xlabel("iterations")
         axs[0, 1].set_ylabel("log-loss")
-        axs[0, 1].set_xscale("log")
+        axs[0, 1].set_yscale("log")
         axs[0, 1].grid(True, which="both", ls=":")
         axs[0, 1].legend()
-        axs[0, 1].set_title("Log-Loss")
+        axs[0, 1].set_title("Loss")
+
+        for model in fb_problem.model:
+            axs[1, 1].plot(x, model[1](x))
+        axs[1, 1].set_xlabel("x")
+        axs[1, 1].set_ylabel("w(x)")
+        axs[1, 1].set_title("Window Functions")
+        axs[1, 1].grid(True, which="both", ls=":")
 
         plt.subplots_adjust(hspace=0.5)
         plt.show()
