@@ -27,4 +27,5 @@ dev = [
 
 [project.scripts]
 base-task = "fbpinns.base:main"
+ext-task = "fbpinns.ext:main"
 
