@@ -154,11 +154,11 @@ class HighFreqFb:
                 Multiplicative(
                     [
                         NeuralNet(1, 1, layers=self.layers, neurons=self.hidden),
-                        Window(lower, upper, 10),
+                        Window(lower, upper, 30),
                     ]
                 )
                 for lower, upper in sorted(
-                    partition(self.extrema[0], self.extrema[1], 30, 0.3),
+                    partition(self.extrema[0], self.extrema[1], 30, 0.0),
                     key=lambda x: min(abs(x[0]), abs(x[1])),
                 )
             ]
