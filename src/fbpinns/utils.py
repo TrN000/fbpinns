@@ -1,6 +1,6 @@
 from typing import Callable, Tuple
 
-from torch import Tensor, sigmoid
+from torch import Tensor, sigmoid, clamp
 import torch.nn as nn
 
 
@@ -19,7 +19,7 @@ def window(
     """sigma: bigger means tighter cutoff"""
 
     def inner(x: Tensor):
-        return sigmoid((x - lower) * sigma) * sigmoid((upper - x) * sigma)
+        return clamp(sigmoid((x - lower) * sigma) * sigmoid((upper - x) * sigma), min=1e-10)
 
     return inner
 
