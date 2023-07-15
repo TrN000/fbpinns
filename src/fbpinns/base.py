@@ -208,7 +208,7 @@ class HighFreqFb:
                 optimizer.step(closure=closure)
         return history
 
-    def plot(self, history: list):
+    def plot(self, history: list, save: str | bool = False):
         # TODO: add option to write to image
         # TODO: make history implicit
         x = torch.linspace(EXTREMA[0], EXTREMA[1], 10000).reshape([-1, 1])
@@ -245,6 +245,8 @@ class HighFreqFb:
         axs[1, 1].set_title("Partial Solutions")
         axs[1, 1].grid(True, which="both", ls=":")
 
+        if save:
+            plt.savefig(f"./img/fbpinn_{save}.png")
 
         plt.show()
 
@@ -257,6 +259,7 @@ def main():
     parser.add_argument("-f", "--fbpinn", action="store_true")
     parser.add_argument("-b", "--both", action="store_true")
     parser.add_argument("-d", "--debug", action="count", default=0)
+    parser.add_argument("--save", action="store_true", default=0)
     args = parser.parse_args()
     it = 10 ** (1 + args.debug)
     x = torch.linspace(EXTREMA[0], EXTREMA[1], 10000).reshape([-1, 1])
@@ -267,9 +270,10 @@ def main():
         simple_problem.plot(loss_history_simple)
 
     if args.fbpinn:
-        fb_problem = HighFreqFb(2, 16)
+        fb_problem = HighFreqFb(2, 16, o_2=15)
         fb_history = fb_problem.fit(it)
-        fb_problem.plot(fb_history)
+        fig_name = f"{it}_2_16" if args.save else False
+        fb_problem.plot(fb_history, save=fig_name)
 
     if args.both:
         simple_problem = HighFreqSimple(5, 128)
@@ -327,4 +331,6 @@ def main():
         axs[1, 1].grid(True, which="both", ls=":")
 
         plt.subplots_adjust(hspace=0.5)
+        filename = f"./img/fb_final_{it}" if args.save else False
+        plt.savefig(filename)
         plt.show()
