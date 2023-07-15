@@ -210,26 +210,40 @@ class HighFreqFb:
     def plot(self, history: list):
         # TODO: add option to write to image
         # TODO: make history implicit
-        inputs, _ = rescale(SOBOL.draw(1000), -6, 6).sort(dim=0)
-        outputs = self.model.forward(inputs).detach().numpy()
-        actual = self.exact_solution(inputs).detach().numpy()
+        x = torch.linspace(EXTREMA[0], EXTREMA[1], 10000).reshape([-1, 1])
+        outputs = self.model.forward(x).detach().numpy()
+        actual = self.exact_solution(x).detach().numpy()
 
-        _, axs = plt.subplots(2, 1, figsize=(16, 10), dpi=150)
-        axs[0].plot(inputs.detach().numpy(), actual)
-        axs[0].plot(inputs.detach().numpy(), outputs)
-        axs[0].set_xlabel("x")
-        axs[0].set_ylabel("f(x)")
-        axs[0].grid(True, which="both", ls=":")
+        _, axs = plt.subplots(2, 2, figsize=(16, 10), dpi=150)
+        axs[0, 0].plot(x.detach().numpy(), actual)
+        axs[0, 0].plot(x.detach().numpy(), outputs)
+        axs[0, 0].set_xlabel("x")
+        axs[0, 0].set_ylabel("f(x)")
+        axs[0, 0].grid(True, which="both", ls=":")
+        axs[0, 0].set_title("Results")
 
-        axs[1].plot(np.arange(1, len(history) + 1), history, label="Train Loss")
-        # axs[1].xscale("log")
-        axs[1].set_xlabel("iterations")
-        axs[1].set_ylabel("log-loss")
-        axs[1].set_xscale("log")
-        axs[1].grid(True, which="both", ls=":")
+        axs[1, 0].set_title("Loss")
+        axs[1, 0].plot(np.arange(1, len(history) + 1), history, label="Train Loss")
+        # axs, 0[1].xscale("log")
+        axs[1, 0].set_xlabel("iterations")
+        axs[1, 0].set_ylabel("log-loss")
+        axs[1, 0].set_yscale("log")
+        axs[1, 0].grid(True, which="both", ls=":")
 
-        axs[0].set_title("Measurements")
-        axs[1].set_title("Solid Solution")
+        axs[0, 1].set_title("Window Functions")
+        for model in self.model:
+            axs[0, 1].plot(x, model[1](x).detach().numpy())
+        axs[0, 1].set_xlabel("x")
+        axs[0, 1].set_ylabel("w(x)")
+        axs[0, 1].grid(True, which="both", ls=":")
+
+        for model in self.model:
+            axs[1, 1].plot(x, model(x).detach().numpy())
+        axs[1, 1].set_xlabel("x")
+        axs[1, 1].set_ylabel("w(x)")
+        axs[1, 1].set_title("Partial Solutions")
+        axs[1, 1].grid(True, which="both", ls=":")
+
 
         plt.show()
 
