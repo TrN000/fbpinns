@@ -91,7 +91,7 @@ class HighFreqSimple:
                     loss = log10(pde_loss + abs(bound) ** 2)
 
                     loss.backward()
-                    history.append(loss.item())
+                    history.append(10 ** loss.item())
                     return float(loss)
 
                 optimizer.step(closure=closure)
@@ -201,7 +201,7 @@ class HighFreqFb:
                     loss = log10(pde_loss + abs(bound) ** 2)
 
                     loss.backward()
-                    history.append(loss.item())
+                    history.append((10**loss).item())
                     return float(loss)
 
                 optimizer.step(closure=closure)
