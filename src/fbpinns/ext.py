@@ -90,9 +90,9 @@ class LogarithmicApproach(HighFreqFb):
 def main():
     it = 1000
 
-    fb_problem = HighFreqFb(2, 16)
-    c_problem = CumulativeApproach(2, 16)
-    l_problem = LogarithmicApproach(2, 16)
+    fb_problem = HighFreqFb(2, 16) # 9630
+    c_problem = CumulativeApproach(2, 16) # 9951
+    l_problem = LogarithmicApproach(2, 16) # 4815
     breakpoint()
 
     fb_hist = fb_problem.fit(it)
